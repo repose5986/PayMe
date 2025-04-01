@@ -1,0 +1,535 @@
+/* --- Base and Variables --- */
+@import url("https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Space+Mono&display=swap");
+
+:root {
+  --primary: #00ff00; /* Bright Green */
+  --secondary: #ff00ff; /* Magenta */
+  --dark: #000000; /* Black */
+  --dark-bg: #0a0a0a; /* Slightly off-black */
+  --light-bg: rgba(16, 32, 16, 0.1); /* Dim green background */
+  --accent: #ffff00; /* Yellow */
+  --terminal-green: #33ff33; /* Main Text Green */
+  --border-color: rgba(51, 255, 51, 0.7); /* Slightly transparent border */
+  --card-bg: rgba(0, 0, 0, 0.75);
+  --card-border: rgba(51, 255, 51, 0.5);
+  --card-hover-shadow: rgba(51, 255, 51, 0.6);
+  --button-hover-bg: rgba(51, 255, 51, 0.2);
+  --scanline-color: rgba(0, 0, 0, 0.15);
+  --vignette-color: rgba(0, 0, 0, 0.4);
+  --copy-success-bg: rgba(255, 255, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px; /* Base font size */
+}
+
+body {
+  background-color: var(--dark-bg);
+  color: var(--terminal-green);
+  font-family: "VT323", monospace;
+  font-size: 1.25rem; /* ~20px */
+  line-height: 1.5;
+  background-image: linear-gradient(
+      var(--light-bg) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, var(--light-bg) 1px, transparent 1px);
+  background-size: 25px 25px; /* Slightly larger grid */
+  text-shadow: 0 0 6px rgba(51, 255, 51, 0.4);
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- CRT Effects --- */
+.crt::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    var(--scanline-color) 1px,
+    transparent 3px /* Slightly thicker scanlines */
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanline-anim 12s linear infinite;
+}
+
+.crt::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 30%, /* Make center clearer */
+    rgba(0, 0, 0, 0.15) 80%,
+    var(--vignette-color) 100%
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* --- Layout & Container --- */
+.container {
+  max-width: 900px; /* Slightly wider */
+  width: 90%;
+  margin: 2rem auto;
+  padding: 1rem 1.5rem; /* Adjusted padding */
+  border: 3px solid var(--border-color);
+  border-radius: 5px; /* Subtle rounding */
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.5); /* Darken container slightly */
+  box-shadow: 0 0 15px rgba(51, 255, 51, 0.1);
+  flex-grow: 1; /* Allows footer to stick to bottom */
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 2rem 0 1.5rem 0;
+  text-align: center;
+  border-bottom: 2px dashed var(--border-color);
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+header::before {
+  content: "[SYS_PAYMENT_INTERFACE]";
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+header::after {
+  content: "[ver 2.0]";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+h1 {
+  font-family: "Press Start 2P", cursive;
+  font-size: clamp(1.5rem, 5vw, 2.2rem); /* Responsive font size */
+  letter-spacing: -1px;
+  margin-bottom: 0.8rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  animation: flicker 5s infinite alternate; /* Smoother flicker */
+}
+
+.subtitle {
+  font-family: "Space Mono", monospace;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  min-height: 1.5em; /* Prevent layout shift during typing */
+}
+
+/* --- Console Output --- */
+.console-output {
+  font-family: "Space Mono", monospace;
+  font-size: 0.9rem;
+  margin: 0 1rem 2rem 1rem;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  line-height: 1.6;
+}
+
+.console-output .prompt {
+  color: var(--accent);
+  opacity: 0.8;
+  margin-right: 0.5em;
+}
+
+/* --- Payment Cards Grid --- */
+main {
+  flex-grow: 1;
+}
+
+.payment-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 0 1rem; /* Padding for grid */
+}
+
+/* --- Individual Card Styling --- */
+.card {
+  border: 2px solid var(--card-border);
+  border-radius: 4px;
+  padding: 1.5rem;
+  position: relative;
+  background-color: var(--card-bg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: powerOn 0.6s ease-out forwards;
+  opacity: 0; /* Start hidden for animation */
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Staggered animation delays */
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
+.card:nth-child(6) { animation-delay: 0.6s; }
+
+.card::before { /* Top accent line */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(0);
+  z-index: 10;
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card:hover::before {
+  transform: scaleX(1);
+}
+
+.card:hover {
+  box-shadow: 0 0 20px var(--card-hover-shadow);
+  transform: translateY(-3px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.card-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--accent);
+  margin-right: 1rem;
+  flex-shrink: 0;
+  animation: pulse 2.5s infinite ease-in-out;
+}
+.card-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+
+.card-title {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1rem;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.card-content {
+  font-family: "Space Mono", monospace;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--card-border);
+  border-radius: 3px;
+  word-break: break-all;
+  flex-grow: 1; /* Allow content to take space */
+}
+
+.crypto-card .card-content .address {
+  font-size: 0.8rem; /* Smaller font for long addresses */
+  display: block; /* Ensure it takes full width */
+  margin-bottom: 1rem; /* Space before QR */
+}
+.email-address {
+    font-size: 0.9rem; /* Slightly smaller for long emails */
+}
+
+
+/* --- QR Code --- */
+.qr-code-container {
+  margin-top: 1rem;
+  text-align: center;
+  background-color: #fff; /* Standard white background for QR */
+  padding: 10px;
+  border-radius: 3px;
+  display: inline-block; /* Fit content */
+}
+
+.qr-code {
+  display: block;
+  width: 120px; /* Adjust size as needed */
+  height: 120px;
+  margin: 0 auto;
+}
+
+.qr-placeholder {
+    width: 120px;
+    height: 120px;
+    background-color: #e0e0e0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-family: "Space Mono", monospace;
+    text-align: center;
+    line-height: 1.2;
+    border: 1px dashed #999;
+}
+
+/* --- Copy Button --- */
+.copy-btn {
+  background-color: transparent;
+  color: var(--accent);
+  border: 2px solid var(--terminal-green);
+  padding: 0.6rem 1.2rem;
+  font-family: "VT323", monospace;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-top: auto; /* Push button to bottom */
+  align-self: flex-start; /* Align button left */
+  border-radius: 3px;
+}
+
+.copy-btn::before { /* Scan effect on hover */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.copy-btn:hover::before {
+  left: 100%;
+}
+
+.copy-btn:hover {
+  background-color: var(--button-hover-bg);
+  box-shadow: 0 0 12px var(--terminal-green);
+  color: #fff; /* Brighter text on hover */
+}
+
+.copy-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 5px var(--terminal-green);
+}
+
+.copy-btn svg {
+  margin-right: 0.7rem;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.copy-btn .check-icon {
+    color: var(--terminal-green); /* Success color */
+}
+
+/* Copied state */
+.copy-btn.copied-success {
+    background-color: var(--copy-success-bg) !important;
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+#status-message {
+    text-align: center;
+    margin-top: 1rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    min-height: 1.5em; /* Prevent layout jump */
+}
+
+
+/* --- Footer --- */
+footer {
+  border-top: 2px dashed var(--border-color);
+  padding: 1.5rem 0 1rem 0;
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.contact-info {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem 2rem; /* Row and column gap */
+  margin-bottom: 1rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  font-family: "Space Mono", monospace;
+  animation: fadeIn 1s ease-in-out forwards;
+  opacity: 0;
+}
+.contact-item:nth-child(1) { animation-delay: 0.2s; }
+.contact-item:nth-child(2) { animation-delay: 0.4s; }
+
+
+.contact-icon {
+  margin-right: 0.5rem;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.footer-text {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 1.5rem;
+    font-family: "Space Mono", monospace;
+}
+
+/* --- Blinking Cursor --- */
+.cursor {
+  display: inline-block;
+  width: 10px;
+  height: 1.2em; /* Match line height */
+  background-color: var(--terminal-green);
+  margin-left: 5px;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom; /* Align better with text */
+}
+
+/* --- Animation Keyframes --- */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px var(--accent); }
+  5% { opacity: 0.9; text-shadow: 0 0 12px var(--accent); }
+  10% { opacity: 0.85; text-shadow: 0 0 6px var(--accent); }
+  15% { opacity: 0.95; text-shadow: 0 0 10px var(--accent); }
+  50% { opacity: 1; text-shadow: 0 0 8px var(--accent); }
+  52% { opacity: 0.7; text-shadow: none; }
+  54% { opacity: 1; text-shadow: 0 0 8px var(--accent); }
+}
+
+@keyframes scanline-anim { /* Renamed from scanline */
+  0% { transform: translateY(-5%); }
+  100% { transform: translateY(5%); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes powerOn {
+  0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+  60% { opacity: 0.7; transform: scale(1.02) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* --- Media Queries --- */
+@media (max-width: 768px) {
+  body {
+    font-size: 1.1rem;
+  }
+  .container {
+    width: 95%;
+    padding: 0.8rem 1rem;
+  }
+  .payment-cards {
+    grid-template-columns: 1fr; /* Single column on smaller screens */
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+  }
+  .card {
+      padding: 1.2rem;
+  }
+  .card-title {
+    font-size: 0.9rem;
+  }
+  .card-content {
+      font-size: 0.9rem;
+  }
+  .crypto-card .card-content .address {
+      font-size: 0.75rem;
+  }
+  .copy-btn {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+  }
+  header::before, header::after {
+      font-size: 0.7rem;
+  }
+  .contact-info {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+  }
+   .footer-text {
+       font-size: 0.75rem;
+   }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.4rem;
+    }
+    .subtitle {
+        font-size: 0.9rem;
+    }
+    .console-output {
+        font-size: 0.8rem;
+        padding: 0.8rem;
+        margin: 0 0.5rem 1.5rem 0.5rem;
+    }
+     .card {
+      padding: 1rem;
+  }
+   .card-title {
+    font-size: 0.8rem;
+  }
+}
